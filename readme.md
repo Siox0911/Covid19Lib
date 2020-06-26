@@ -35,3 +35,5 @@ that analyzes the confirmed cases (without Population) and one that analyzes
 the dead.
 
 Very strange...
+
+![Screenshot](img/CLI_Screen.jpg)
