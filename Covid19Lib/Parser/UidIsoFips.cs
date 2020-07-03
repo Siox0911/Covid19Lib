@@ -166,7 +166,7 @@ namespace Covid19Lib.Parser
         {
             try
             {
-                var allResult = await Covid19US.ParseConfirmedAsync(Settings.TimeSeriesConfirmedUS).ConfigureAwait(false);
+                var allResult = await Covid19US.ParseConfirmedAsync(Settings.TimeSeriesConfirmedUSFile).ConfigureAwait(false);
                 return allResult.Where(x => x.CountryOrRegion == CountryOrRegion).ToList();
             }
             catch (AggregateException)

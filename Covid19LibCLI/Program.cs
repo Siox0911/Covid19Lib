@@ -122,8 +122,8 @@ namespace Covid19LibCLI
             /*
              * Official global data
              */
-            var confirmedUS = Covid19US.ParseConfirmedAsync(Settings.TimeSeriesConfirmedUS).Result;
-            var deathsUS = Covid19US.ParseDeathAsync(Settings.TimeSeriesDeathsUS).Result;
+            var confirmedUS = Covid19US.ParseConfirmedAsync(Settings.TimeSeriesConfirmedUSFile).Result;
+            var deathsUS = Covid19US.ParseDeathAsync(Settings.TimeSeriesDeathsUSFile).Result;
             //var recoveredUS = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
 
             //Summary all the most current date in "DateValues". So we will get the summary of all global infected people.
