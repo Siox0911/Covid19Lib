@@ -179,7 +179,7 @@ namespace Covid19LibCLI
             foreach (var top in top20Today)
             {
                 c++;
-                var population = deathsUS.Find(x => x.ProvinceOrState == top.ProvinceOrState).Population;
+                var population = deathsUS.Find(x => x.UID == top.UID).Population;
                 var populationFormated = $"{int.Parse(population):N0}";
                 var percentageOfPopulation = $"{top.Last24Hours * 100d / int.Parse(population):N3}";
                 var last24Hours = $"{top.Last24Hours:N0}";
