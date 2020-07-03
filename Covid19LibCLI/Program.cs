@@ -180,10 +180,11 @@ namespace Covid19LibCLI
             {
                 c++;
                 var population = deathsUS.Find(x => x.ProvinceOrState == top.ProvinceOrState).Population;
-                var percentageOfPopulation = $"{(top.Last24Hours * 100d / int.Parse(population)):N3}";
+                var populationFormated = $"{int.Parse(population):N0}";
+                var percentageOfPopulation = $"{top.Last24Hours * 100d / int.Parse(population):N3}";
                 var last24Hours = $"{top.Last24Hours:N0}";
 
-                Console.WriteLine($"{c:00}. {top.CombinedKey,-35}: {last24Hours,10}; {percentageOfPopulation}% of population ({population})");
+                Console.WriteLine($"{c:00}. {top.CombinedKey,-35}: {last24Hours,10}; {percentageOfPopulation}% of population ({populationFormated,12})");
             }
             Console.ResetColor();
             Console.WriteLine("=========================");
