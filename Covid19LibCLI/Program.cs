@@ -109,12 +109,12 @@ namespace Covid19LibCLI
             {
                 c++;
                 var last24Hours = $"{top.Last24Hours:N0}";
-                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-15}: {last24Hours,10}");
+                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-25}: {last24Hours,10}");
             }
             Console.ResetColor();
-            Console.WriteLine("=========================");
+            Console.WriteLine("=========================================");
             var sumTop20Today = $"{ top20Today.Sum(x => x.Last24Hours):N0}";
-            Console.WriteLine($"{"Summary",-19}: {sumTop20Today,10}\n\n");
+            Console.WriteLine($"{"Summary",-29}: {sumTop20Today,10}\n\n");
         }
 
         private static void ParserShowUSData()
@@ -143,7 +143,7 @@ namespace Covid19LibCLI
             var confirmedCases14DaysPreviously = confirmedUS.Where(y => !y.IsHeader).Sum(x => x.DateValues.Find(z => z.Date == newDate14Prev).NumbersComplete);
 
             //Top twenty countries @lastDateInData; also only the last day (24h) not the summary of all cases.
-            var top20Today = confirmedUS.Where(y => !y.IsHeader).OrderByDescending(z => z.Last24Hours).Take(20);
+            var top20Today = confirmedUS.Where(y => !y.IsHeader).Where(x => int.Parse(x.UID) < 84060000).OrderByDescending(z => z.Last24Hours).Take(20);
 
             //This date has the most cases worldwide in the timeline
             //Get all the dates
@@ -187,7 +187,7 @@ namespace Covid19LibCLI
                 Console.WriteLine($"{c:00}. {top.CombinedKey,-35}: {last24Hours,10}; {percentageOfPopulation}% of population ({populationFormated,12})");
             }
             Console.ResetColor();
-            Console.WriteLine("=========================");
+            Console.WriteLine("===========================================================================");
             var sumTop20Today = $"{ top20Today.Sum(x => x.Last24Hours):N0}";
             Console.WriteLine($"{"Summary",-39}: {sumTop20Today,10}\n\n");
         }
