@@ -108,8 +108,7 @@ namespace Covid19LibCLI
             foreach (var top in top20Today)
             {
                 c++;
-                var last24Hours = $"{top.Last24Hours:N0}";
-                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-25}: {last24Hours,10}");
+                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-25}: {top.Last24Hours,10:N0}");
             }
             Console.ResetColor();
             Console.WriteLine("=========================================");
@@ -180,16 +179,12 @@ namespace Covid19LibCLI
             {
                 c++;
                 var population = deathsUS.Find(x => x.UID == top.UID).Population;
-                var populationFormated = $"{int.Parse(population):N0}";
                 var percentageOfPopulation = $"{top.Last24Hours * 100d / int.Parse(population):N3}";
-                var last24Hours = $"{top.Last24Hours:N0}";
-
-                Console.WriteLine($"{c:00}. {top.CombinedKey,-35}: {last24Hours,10}; {percentageOfPopulation}% of population ({populationFormated,12})");
+                Console.WriteLine($"{c:00}. {top.CombinedKey,-35}: {top.Last24Hours,10:N0}; {percentageOfPopulation}% of population ({population,12:N0})");
             }
             Console.ResetColor();
             Console.WriteLine("===========================================================================");
-            var sumTop20Today = $"{ top20Today.Sum(x => x.Last24Hours):N0}";
-            Console.WriteLine($"{"Summary",-39}: {sumTop20Today,10}\n\n");
+            Console.WriteLine($"{"Summary",-39}: {top20Today.Sum(x => x.Last24Hours),10:N0}\n\n");
         }
 
         private static void ParserShowUidFipsData()
