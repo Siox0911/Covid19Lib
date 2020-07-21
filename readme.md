@@ -1,3 +1,4 @@
+![.NET Core](https://github.com/Siox0911/Covid19Lib/workflows/.NET%20Core/badge.svg?branch=master)
 # The Covid-19 Library 
 
 This library analyzes John Hopkins University's
