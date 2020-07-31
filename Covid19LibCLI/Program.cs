@@ -105,15 +105,17 @@ namespace Covid19LibCLI
             Console.WriteLine($"\nTop 20 countries with the most cases in the past 24 hours: {lastDateInData}:");
             var c = 0;
             Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"{"---"} {"Country",-25}: {"Last 24 hours",13} : {"Total",13}");
+            Console.WriteLine($"______________________________________________________________");
             foreach (var top in top20Today)
             {
                 c++;
-                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-25}: {top.Last24Hours,10:N0}");
+                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-25}: {top.Last24Hours,13:N0} : {top.DateValues.Last().NumbersComplete,13:N0}");
             }
             Console.ResetColor();
-            Console.WriteLine("=========================================");
+            Console.WriteLine("===============================================================");
             var sumTop20Today = $"{ top20Today.Sum(x => x.Last24Hours):N0}";
-            Console.WriteLine($"{"Summary",-29}: {sumTop20Today,10}\n\n");
+            Console.WriteLine($"{"Summary",-29}: {sumTop20Today,13} : {top20Today.Sum(x => x.DateValues.Last().NumbersComplete), 13:N0}\n\n");
         }
 
         private static void ParserShowUSData()

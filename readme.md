@@ -37,4 +37,4 @@ the dead.
 
 Very strange...
 
-![Screenshot](img/CLI_Screen.jpg)
+![Screenshot](img/CLI_Screen.png)
