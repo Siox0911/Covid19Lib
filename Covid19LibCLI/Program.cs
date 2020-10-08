@@ -52,6 +52,11 @@ namespace Covid19LibCLI
             var deathsGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesDeathsGlobalFile).Result;
             var recoveredGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
 
+            //Parsing the UidIsoFips data to collect the complete population of all countrys
+            //All the regions and countries. This will be more as 3900 results.
+            //Later we count all regions population of a country. This will include "Unknow" regions, but they are often 0.
+            var fipsList = UidIsoFips.ParseAsync(Settings.UidIsoFipsFile).Result;
+
             //Global data of confirmed Covid-19 cases in Germany; this line is for demonstration only, without an output
             var germanOnly = confirmedGlobal.Where(x => x.CountryOrRegion == "Germany").ToList();
 
@@ -81,10 +86,10 @@ namespace Covid19LibCLI
             foreach (var date in dates)
             {
                 //cases on date
-                var numberOfCases = confirmedGlobal.Where(y => !y.IsHeader).Sum(x => x.DateValues.Find(z => z.Date == date.Date).Numbers);
-                if (numberOfCases >= mostCasesAtDay.Numbers)
+                var numberOfCases = confirmedGlobal.Where(y => !y.IsHeader).Sum(x => x.DateValues.Find(z => z.Date == date.Date).NumbersLast24Hours);
+                if (numberOfCases >= mostCasesAtDay.NumbersLast24Hours)
                 {
-                    mostCasesAtDay = new DateValue { Date = date.Date, Numbers = numberOfCases };
+                    mostCasesAtDay = new DateValue { Date = date.Date, NumbersLast24Hours = numberOfCases };
                 }
             }
 
@@ -100,22 +105,27 @@ namespace Covid19LibCLI
             Console.WriteLine($"Worldwide active cases: {activeCases:N0}");
             Console.ResetColor();
             Console.WriteLine($"Worldwide infection death ratio: {infectedDeathRatio:N3}%");
-            Console.WriteLine($"\nThe day with the most new cases worldwide: {mostCasesAtDay?.Date ?? default} with {mostCasesAtDay?.Numbers ?? default:N0} cases");
+            Console.WriteLine($"\nThe day with the most new cases worldwide: {mostCasesAtDay?.Date ?? default} with {mostCasesAtDay?.NumbersLast24Hours ?? default:N0} cases");
 
             Console.WriteLine($"\nTop 20 countries with the most cases in the past 24 hours: {lastDateInData}:");
             var c = 0;
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"{"---"} {"Country",-25}: {"Last 24 hours",13} : {"Total",13}");
-            Console.WriteLine($"______________________________________________________________");
+            Console.WriteLine($"Nr.|{"Country",-25}| {"Last 24 hours",13} | {"Total",13} | {"Total in percent",11}");
+            Console.WriteLine($"   |{"",-25}| {"",13} | {"",13} | {"of country population", 11}");
+            //Console.WriteLine($"______________________________________________________________");
+            Console.WriteLine("--------------------------------------------------------------------------");
             foreach (var top in top20Today)
             {
                 c++;
-                Console.WriteLine($"{c:00}. {top.CountryOrRegion,-25}: {top.Last24Hours,13:N0} : {top.DateValues.Last().NumbersComplete,13:N0}");
+                //Now we will calculate the population of each country
+                var population = fipsList.FindAll(x => x.CountryOrRegion == top.CountryOrRegion && x.Code3 == x.UID).Sum(y => y.Population != "" ? int.Parse(y.Population) : 0);
+                var top20populationPercentage = $"{(top.DateValues.Last().NumbersComplete * 100d / population):N3}";
+                Console.WriteLine($"{c:00}.|{top.CountryOrRegion,-25}| {top.Last24Hours,13:N0} | {top.DateValues.Last().NumbersComplete,13:N0} | {top20populationPercentage, 11:N0}");
             }
             Console.ResetColor();
-            Console.WriteLine("===============================================================");
+            Console.WriteLine("==========================================================================");
             var sumTop20Today = $"{ top20Today.Sum(x => x.Last24Hours):N0}";
-            Console.WriteLine($"{"Summary",-29}: {sumTop20Today,13} : {top20Today.Sum(x => x.DateValues.Last().NumbersComplete), 13:N0}\n\n");
+            Console.WriteLine($"{"Summary",-29}| {sumTop20Today,13} | {top20Today.Sum(x => x.DateValues.Last().NumbersComplete),13:N0}\n\n");
         }
 
         private static void ParserShowUSData()
@@ -153,10 +163,10 @@ namespace Covid19LibCLI
             foreach (var date in dates)
             {
                 //cases on date
-                var numberOfCases = confirmedUS.Where(y => !y.IsHeader).Sum(x => x.DateValues.Find(z => z.Date == date.Date).Numbers);
-                if (numberOfCases >= mostCasesAtDay.Numbers)
+                var numberOfCases = confirmedUS.Where(y => !y.IsHeader).Sum(x => x.DateValues.Find(z => z.Date == date.Date).NumbersLast24Hours);
+                if (numberOfCases >= mostCasesAtDay.NumbersLast24Hours)
                 {
-                    mostCasesAtDay = new DateValue { Date = date.Date, Numbers = numberOfCases };
+                    mostCasesAtDay = new DateValue { Date = date.Date, NumbersLast24Hours = numberOfCases };
                 }
             }
 
@@ -172,21 +182,24 @@ namespace Covid19LibCLI
             //Console.WriteLine($"US active cases: {activeCases:N0}");
             Console.ResetColor();
             Console.WriteLine($"US infection death ratio: {infectedDeathRatio:N3}%");
-            Console.WriteLine($"\nThe day with the most new cases in US: {mostCasesAtDay?.Date ?? default} with {mostCasesAtDay?.Numbers ?? default:N0} cases");
+            Console.WriteLine($"\nThe day with the most new cases in US: {mostCasesAtDay?.Date ?? default} with {mostCasesAtDay?.NumbersLast24Hours ?? default:N0} cases");
 
-            Console.WriteLine($"\nTop 20 provinces or states with the most cases in the past 24 hours: {lastDateInData}:");
+            Console.WriteLine($"\nTop 20 provinces or states with the most cases in the past 24 hours: {lastDateInData}:\n");
             var c = 0;
             Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"    | {"",-35}| {"",10} | {"Percentage of",12} | {"",12}");
+            Console.WriteLine($"Nr. | {"Country",-34} | {"Cases",10} | {"Population",13} | {"Population",12}");
+            Console.WriteLine($"-------------------------------------------------------------------------------------");
             foreach (var top in top20Today)
             {
                 c++;
-                var population = deathsUS.Find(x => x.UID == top.UID).Population;
-                var percentageOfPopulation = $"{top.Last24Hours * 100d / int.Parse(population):N3}";
-                Console.WriteLine($"{c:00}. {top.CombinedKey,-35}: {top.Last24Hours,10:N0}; {percentageOfPopulation}% of population ({population,12:N0})");
+                var population = int.Parse(deathsUS.Find(x => x.UID == top.UID).Population);
+                var percentageOfPopulation = $"{top.Last24Hours * 100d / population:N3}";
+                Console.WriteLine($"{c:00}. |{top.CombinedKey,-35} | {top.Last24Hours,10:N0} | {percentageOfPopulation,12}% | {population,12:N0}");
             }
             Console.ResetColor();
-            Console.WriteLine("===========================================================================");
-            Console.WriteLine($"{"Summary",-39}: {top20Today.Sum(x => x.Last24Hours),10:N0}\n\n");
+            Console.WriteLine("=====================================================================================");
+            Console.WriteLine($"{"Summary",-41}: {top20Today.Sum(x => x.Last24Hours),10:N0}\n\n");
         }
 
         private static void ParserShowUidFipsData()
@@ -201,7 +214,7 @@ namespace Covid19LibCLI
             //Group the fipsList to the code3 value. We accept the more as 3200 subgroups in the US (Code3 840).
             //We get more as 220 regions. Maybe Code3 can't be a filter for a single country or region.
             //May you have to adjust more as one filter.
-            var fipsListGroups = fipsList.OrderBy(y => y.Code3).GroupBy(x => x.Code3).ToList();
+            var fipsListGroups = fipsListGermany.OrderBy(y => y.Code3).GroupBy(x => x.Code3).ToList();
 
             //A simple loop through this groups
             //Topgroups

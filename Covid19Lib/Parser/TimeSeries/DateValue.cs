@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Covid19Lib.Parser.TimeSeries
 {
+    /// <summary>
+    /// A value that will present a day on Covid-19 pandemic
+    /// </summary>
     public class DateValue : IComparable, IComparable<DateValue>
     {
         /// <summary>
@@ -20,7 +23,7 @@ namespace Covid19Lib.Parser.TimeSeries
         /// <summary>
         /// The number of cases in the past 24 hours
         /// </summary>
-        public int Numbers { get; set; }
+        public int NumbersLast24Hours { get; set; }
 
 
         /// <summary>Compares the current instance with another object of the same type and returns an integer that indicates whether the current instance precedes, follows, or occurs in the same position in the sort order as the other object.</summary>

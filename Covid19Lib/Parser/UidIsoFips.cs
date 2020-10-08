@@ -42,7 +42,7 @@ namespace Covid19Lib.Parser
         public string Code3 { get; set; }
 
         /// <summary>
-        /// Federal Information Processing Standards code that uniquely identifies counties within the USA.
+        /// Federal Information Processing Standards code that uniquely identifies counties within the USA. US only
         /// </summary>
         public string FIPS { get; set; }
 
@@ -52,7 +52,7 @@ namespace Covid19Lib.Parser
         public string Admin2 { get; set; }
 
         /// <summary>
-        /// Province, state or dependency name.
+        /// Province, state or dependency name. Example Moscow Oblast (Russia) or Bayern (Germany) or Virginia (US)
         /// </summary>
         public string ProvinceOrState { get; set; }
 

@@ -11,7 +11,9 @@ using System.Threading.Tasks;
 
 namespace Covid19Lib.Parser.TimeSeries
 {
-
+    /// <summary>
+    /// Class for parsing and present the global data.
+    /// </summary>
     public class Covid19Global : IEquatable<Covid19Global>, IComparable<Covid19Global>, IComparable, IEqualityComparer<Covid19Global>
     {
         /// <summary>
@@ -102,7 +104,7 @@ namespace Covid19Lib.Parser.TimeSeries
                             {
                                 if (currentRow == 1)
                                 {
-                                    //In the header row are this the dates.
+                                    //In the header row this is the date.
                                     newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], System.Globalization.CultureInfo.InvariantCulture) });
                                 }
                                 else
@@ -110,7 +112,7 @@ namespace Covid19Lib.Parser.TimeSeries
                                     //And here we will bring both together
                                     //So the first date is, in the header row, the first zero based entry of DateValues.
                                     var numberOfCasesInRow = int.Parse(row[i] ?? "0");
-                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = listOfConfirmedGlobal[0].DateValues[i - 4].Date, NumbersComplete = numberOfCasesInRow, Numbers = numberOfCasesInRow - numbersLastDay });
+                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = listOfConfirmedGlobal[0].DateValues[i - 4].Date, NumbersComplete = numberOfCasesInRow, NumbersLast24Hours = numberOfCasesInRow - numbersLastDay });
                                     numbersLastDay = numberOfCasesInRow;
                                 }
                             }
