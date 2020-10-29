@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
@@ -19,37 +20,37 @@ namespace Covid19Lib.Parser.TimeSeries
         /// <summary>
         /// The first row is always a header, all other rows are the values.
         /// </summary>
-        public bool IsHeader { get; private set; }
+        public bool IsHeader { get; set; }
 
         /// <summary>
         /// Province, state or dependency name.
         /// </summary>
-        public string ProvinceOrState { get; private set; }
+        public string ProvinceOrState { get; set; }
 
         /// <summary>
         /// Country, region or sovereignty name.
         /// The names of locations included on the Website correspond with the official designations used by the U.S. Department of State.
         /// </summary>
-        public string CountryOrRegion { get; private set; }
+        public string CountryOrRegion { get; set; }
 
         /// <summary>
         /// Dot locations on the dashboard. All points (except for Australia) shown on the map are based on geographic centroids,
         /// and are not representative of a specific address, building or any location at a spatial scale finer than a province/state.
         /// Australian dots are located at the centroid of the largest city in each state.
         /// </summary>
-        public string Latitude { get; private set; }
+        public string Latitude { get; set; }
 
         /// <summary>
         /// Dot locations on the dashboard. All points (except for Australia) shown on the map are based on geographic centroids,
         /// and are not representative of a specific address, building or any location at a spatial scale finer than a province/state.
         /// Australian dots are located at the centroid of the largest city in each state.
         /// </summary>
-        public string Longitude { get; private set; }
+        public string Longitude { get; set; }
 
         /// <summary>
         /// The date if <code><seealso cref="IsHeader"/> = true</code>otherwise the number of cases.
         /// </summary>
-        public List<DateValue> DateValues { get; private set; }
+        public List<DateValue> DateValues { get; set; }
 
         /// <summary>
         /// This will calculate the cases of the last 24 hours. The calulation is the summary of current day - the summary of the day before.
@@ -105,13 +106,13 @@ namespace Covid19Lib.Parser.TimeSeries
                                 if (currentRow == 1)
                                 {
                                     //In the header row this is the date.
-                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], System.Globalization.CultureInfo.InvariantCulture) });
+                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], CultureInfo.InvariantCulture) });
                                 }
                                 else
                                 {
                                     //And here we will bring both together
                                     //So the first date is, in the header row, the first zero based entry of DateValues.
-                                    var numberOfCasesInRow = int.Parse(row[i] ?? "0");
+                                    var numberOfCasesInRow = int.Parse(row[i] ?? "0", NumberStyles.Any, new CultureInfo("en-US"));
                                     newConfirmedGlobal.DateValues.Add(new DateValue { Date = listOfConfirmedGlobal[0].DateValues[i - 4].Date, NumbersComplete = numberOfCasesInRow, NumbersLast24Hours = numberOfCasesInRow - numbersLastDay });
                                     numbersLastDay = numberOfCasesInRow;
                                 }

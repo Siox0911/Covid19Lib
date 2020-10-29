@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -10,6 +11,16 @@ namespace Covid19LibCLI
 {
     class Program
     {
+        private static List<Covid19Global> confirmedGlobal;
+        private static List<Covid19Global> deathsGlobal;
+        private static List<Covid19Global> recoveredGlobal;
+
+        private static List<Covid19US> confirmedUS;
+        private static List<Covid19US> deathsUS;
+
+        private static List<UidIsoFips> fipsList;
+        private static List<Covid19GlobalMerged> confirmedGlobalMerged;
+
         private static void Main(string[] args)
         {
             //The Project to parse and merge the data is using the settings.cs file in the base path of project Covid19Lib
@@ -21,6 +32,28 @@ namespace Covid19LibCLI
                 return;
             }
 
+            /*
+             * Official global data
+             */
+            confirmedGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesConfirmedGlobalFile).Result;
+            deathsGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesDeathsGlobalFile).Result;
+            recoveredGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
+
+            /*
+             * Official us data
+             */
+            confirmedUS = Covid19US.ParseConfirmedAsync(Settings.TimeSeriesConfirmedUSFile).Result;
+            deathsUS = Covid19US.ParseDeathAsync(Settings.TimeSeriesDeathsUSFile).Result;
+            //var recoveredUS = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
+
+            //Parsing the UidIsoFips data to collect the complete population of all countrys
+            //All the regions and countries. This will be more as 3900 results.
+            //Later we count all regions population of a country. This will include "Unknow" regions, but they are often 0.
+            fipsList = UidIsoFips.ParseAsync(Settings.UidIsoFipsFile).Result;
+
+            //Merging the Global Data and the UIDFipsData
+            confirmedGlobalMerged = Covid19GlobalMerged.CreateCovid19GlobalMergedList(confirmedGlobal, fipsList);
+
             /******************************************
              * Here is the part for the parser samples
              * Uncomment the lines for an output
@@ -29,7 +62,8 @@ namespace Covid19LibCLI
             Console.Title = "Covid-19 global data - Source John Hopkins University";
 
             ParserShowGlobalData();
-            ParserShowUSData();
+            ParserShowGlobalPercentageOfPopulation();
+            //ParserShowUSData();
             //ParserShowUidFipsData();
 
             /******************************************
@@ -45,18 +79,6 @@ namespace Covid19LibCLI
 
         private static void ParserShowGlobalData()
         {
-            /*
-             * Official global data
-             */
-            var confirmedGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesConfirmedGlobalFile).Result;
-            var deathsGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesDeathsGlobalFile).Result;
-            var recoveredGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
-
-            //Parsing the UidIsoFips data to collect the complete population of all countrys
-            //All the regions and countries. This will be more as 3900 results.
-            //Later we count all regions population of a country. This will include "Unknow" regions, but they are often 0.
-            var fipsList = UidIsoFips.ParseAsync(Settings.UidIsoFipsFile).Result;
-
             //Global data of confirmed Covid-19 cases in Germany; this line is for demonstration only, without an output
             var germanOnly = confirmedGlobal.Where(x => x.CountryOrRegion == "Germany").ToList();
 
@@ -111,7 +133,7 @@ namespace Covid19LibCLI
             var c = 0;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine($"Nr.|{"Country",-25}| {"Last 24 hours",13} | {"Total",13} | {"Total in percent",11}");
-            Console.WriteLine($"   |{"",-25}| {"",13} | {"",13} | {"of country population", 11}");
+            Console.WriteLine($"   |{"",-25}| {"",13} | {"",13} | {"of country population",11}");
             //Console.WriteLine($"______________________________________________________________");
             Console.WriteLine("--------------------------------------------------------------------------");
             foreach (var top in top20Today)
@@ -119,24 +141,70 @@ namespace Covid19LibCLI
                 c++;
                 //Now we will calculate the population of each country
                 var population = fipsList.FindAll(x => x.CountryOrRegion == top.CountryOrRegion && x.Code3 == x.UID).Sum(y => y.Population != "" ? int.Parse(y.Population) : 0);
-                var top20populationPercentage = $"{(top.DateValues.Last().NumbersComplete * 100d / population):N3}";
-                Console.WriteLine($"{c:00}.|{top.CountryOrRegion,-25}| {top.Last24Hours,13:N0} | {top.DateValues.Last().NumbersComplete,13:N0} | {top20populationPercentage, 11:N0}");
+                var top20populationPercentage = $"{top.DateValues.Last().NumbersComplete * 100d / population:N3}";
+                Console.WriteLine($"{c:00}.|{top.CountryOrRegion,-25}| {top.Last24Hours,13:N0} | {top.DateValues.Last().NumbersComplete,13:N0} | {top20populationPercentage,11:N0}%");
             }
             Console.ResetColor();
             Console.WriteLine("==========================================================================");
             var sumTop20Today = $"{ top20Today.Sum(x => x.Last24Hours):N0}";
             Console.WriteLine($"{"Summary",-29}| {sumTop20Today,13} | {top20Today.Sum(x => x.DateValues.Last().NumbersComplete),13:N0}\n\n");
+            Console.ResetColor();
+        }
+
+        private static void ParserShowGlobalPercentageOfPopulation()
+        {
+            //Hier berechnen wir wieviele Prozent der Bevölkerung aller Länder schon infiziert waren. Eine Mehrfachinfektion einer Person kann aber nicht ausgeschlossen werden.
+            var sortedGlobalMergeList = confirmedGlobalMerged.Where(y => !double.IsInfinity(y.PercentageOfPopulation)).OrderByDescending(x => x.PercentageOfPopulation).ToList();
+            var sortedGlobalMergeListTop20 = sortedGlobalMergeList.Take(20);
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Top 20 countries with the highest infection rate including Germany\n\n");
+            Console.WriteLine("ATTENTION: This list is not working properly! In progress...\n");
+            Console.ResetColor();
+            Console.WriteLine($"Date of the data:{sortedGlobalMergeList.Find(x => !x.IsHeader)?.DateValues.Last().Date}\n\n");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Nr. |{"Country",-25}| {"Population",13} | {"Total",13} | {"Total in percent",11}");
+            Console.WriteLine($"    |{"",-25}| {"",13} | {"infected",13} | {"of country population",11}");
+            //Console.WriteLine($"______________________________________________________________");
+            Console.WriteLine("--------------------------------------------------------------------------");
+            int c = 0;
+            int sumPopulation = 0;
+            int sumInfected = 0;
+            foreach (var country in sortedGlobalMergeListTop20)
+            {
+                c++;
+                sumPopulation += country.Population;
+                sumInfected += country.DateValues.Last().NumbersComplete;
+                Console.WriteLine($"{c:00}. |{country.CountryOrRegion,-25}| {country.Population,13:N0} | {country.DateValues.Last().NumbersComplete,13:N0} | {country.PercentageOfPopulation,11:N2}%");
+            }
+
+            Console.WriteLine($"..  |{"",-25}| {"",13:N0} | {"",13:N0} | {"",11:N2}");
+            c = 0;
+            var lastIndex = sortedGlobalMergeList.Count - 1;
+            foreach (var country in sortedGlobalMergeList)
+            {
+                c++;
+                if (country.CountryOrRegion == "Germany")
+                {
+                    sumPopulation += country.Population;
+                    sumInfected += country.DateValues.Last().NumbersComplete;
+                    Console.WriteLine($"{c:00}. |{country.CountryOrRegion,-25}| {country.Population,13:N0} | {country.DateValues.Last().NumbersComplete,13:N0} | {country.PercentageOfPopulation,11:N2}%");
+                }
+                if (c == lastIndex)
+                {
+                    sumPopulation += country.Population;
+                    sumInfected += country.DateValues.Last().NumbersComplete;
+                    Console.WriteLine($"..  |{"",-25}| {"",13:N0} | {"",13:N0} | {"",11:N2}");
+                    Console.WriteLine($"{c:00}.|{country.CountryOrRegion,-25}| {country.Population,13:N0} | {country.DateValues.Last().NumbersComplete,13:N0} | {country.PercentageOfPopulation,11:N2}%");
+                }
+            }
+            Console.ResetColor();
+            Console.WriteLine("==========================================================================");
+            Console.WriteLine($"{"Summary",-30}| {sumPopulation,13:N0} | {sumInfected,13:N0}\n\n");
         }
 
         private static void ParserShowUSData()
         {
-            /*
-             * Official global data
-             */
-            var confirmedUS = Covid19US.ParseConfirmedAsync(Settings.TimeSeriesConfirmedUSFile).Result;
-            var deathsUS = Covid19US.ParseDeathAsync(Settings.TimeSeriesDeathsUSFile).Result;
-            //var recoveredUS = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
-
             //Summary all the most current date in "DateValues". So we will get the summary of all global infected people.
             //With the x.DateValues.Last() function, we will get the most current date.
             var confirmedCases = confirmedUS.Where(y => !y.IsHeader).Sum(x => x.DateValues.Last().NumbersComplete);

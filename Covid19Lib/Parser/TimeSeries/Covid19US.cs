@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
@@ -154,13 +155,13 @@ namespace Covid19Lib.Parser.TimeSeries
                                 if (currentRow == 1)
                                 {
                                     //In the header row this is the date.
-                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], System.Globalization.CultureInfo.InvariantCulture) });
+                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], CultureInfo.InvariantCulture) });
                                 }
                                 else
                                 {
                                     //And here we will bring both together
                                     //So the first date is, in the header row, the first zero based entry of DateValues.
-                                    var numberOfCasesInRow = int.Parse(row[i] ?? "0");
+                                    var numberOfCasesInRow = int.Parse(row[i] ?? "0", NumberStyles.Any, new CultureInfo("en-US"));
                                     newConfirmedGlobal.DateValues.Add(new DateValue { Date = listOfConfirmedGlobal[0].DateValues[i - 11].Date, NumbersComplete = numberOfCasesInRow, NumbersLast24Hours = numberOfCasesInRow - numbersCurrentDay });
                                     numbersCurrentDay = numberOfCasesInRow;
                                 }
@@ -234,13 +235,13 @@ namespace Covid19Lib.Parser.TimeSeries
                                 if (currentRow == 1)
                                 {
                                     //In the header row are this the dates.
-                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], System.Globalization.CultureInfo.InvariantCulture) });
+                                    newConfirmedGlobal.DateValues.Add(new DateValue { Date = DateTime.Parse(row[i], CultureInfo.InvariantCulture) });
                                 }
                                 else
                                 {
                                     //And here we will bring both together
                                     //So the first date is, in the header row, the first zero based entry of DateValues.
-                                    var numberOfCasesInRow = int.Parse(row[i] ?? "0");
+                                    var numberOfCasesInRow = int.Parse(row[i] ?? "0", NumberStyles.Any, new CultureInfo("en-US"));
                                     newConfirmedGlobal.DateValues.Add(new DateValue { Date = listOfConfirmedGlobal[0].DateValues[i - 12].Date, NumbersComplete = numberOfCasesInRow, NumbersLast24Hours = numberOfCasesInRow - numbersCurrentDay });
                                     numbersCurrentDay = numberOfCasesInRow;
                                 }
@@ -256,6 +257,10 @@ namespace Covid19Lib.Parser.TimeSeries
                     throw;
                 }
                 catch (ArgumentNullException)
+                {
+                    throw;
+                }
+                catch (System.FormatException)
                 {
                     throw;
                 }
