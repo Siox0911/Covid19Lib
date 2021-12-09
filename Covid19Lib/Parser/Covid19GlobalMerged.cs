@@ -10,7 +10,7 @@ namespace Covid19Lib.Parser
     /// <summary>
     /// This class is merging the GlobalData with the UidIsoFips data.
     /// </summary>
-    public class Covid19GlobalMerged: Covid19Global
+    public class Covid19GlobalMerged : Covid19Global
     {
         /// <summary>
         /// The population of a Country or Region
@@ -20,7 +20,17 @@ namespace Covid19Lib.Parser
         /// <summary>
         /// The infected population in percent.
         /// </summary>
-        public double PercentageOfPopulation { get { return DateValues.Last().NumbersComplete * 100d / Population; } }
+        public double PercentageOfPopulation
+        {
+            get
+            {
+                if(DateValues?.Count == 0)
+                {
+                    return 0;
+                }
+                return ((DateValues?.Last()?.NumbersComplete) ?? 0) * 100d / Population;
+            }
+        }
 
         internal Covid19GlobalMerged() { }
 
@@ -40,31 +50,73 @@ namespace Covid19Lib.Parser
 
             var result = new List<Covid19GlobalMerged>();
 
-            foreach(var covid19Global in covid19GlobalList)
+
+            //New Strategy: Nimm erst die UIDFipsListe und nur die Daten, wo die UID == CODE3 ist.
+            //Damit erhälst du eine reine Länderliste. Durch diese Liste iterierst du und holst die Gruppen
+            //aus der Covid19 Liste. Dann nimmst du die Summe der Infizierten
+            //So musst du aber die Basisklasse wegwerfen und die Anzahl der Infizierten hier reinbringen
+            //Oder alles so ummodeln, dass die Basisklasse auf Länderebene funktioniert
+            //Bedeutet, dass Province or State = "" sein muss. :)
+
+            ////Neue Strategie
+            var countryUIDFipsListGrouped = uidIsoFipsList.Where(x => x.Code3 == x.UID).OrderBy(y => y.CountryOrRegion).GroupBy(z => z.CountryOrRegion).ToList();
+
+            //Bisher herausgefunden: Es gibt pro Land noch den CombinedKey, der Province und Country zusammenführt.
+            //Hier kommt z.B: China 3x vor. DE nur 1x und Canada auch nur 1x
+            //DE kommt meist nur 1x, aber China ist so ein Ding und Canada auch.
+
+            foreach (var countryUIDFipsSubgroup in countryUIDFipsListGrouped)
             {
-                //dynamic convertion of the properties from the baseclass (Covid19Global) to this class (Covid19GlobalMerged)
-                var rowResult = new Covid19GlobalMerged();
-
-                foreach(var prop in covid19Global.GetType().GetProperties())
+                foreach (var countryUIDFipsList in countryUIDFipsSubgroup)
                 {
-                    var propInfo = rowResult.GetType().GetProperty(prop.Name);
-                    if(propInfo.CanWrite)
+
+                    //Jetzt haben wir hier wieder die Länder
+                    //die eigentlich schonmal Einzigartig waren....
+                    //Ich könnte kotzen (25.05.2021)
+                    var rowResult = new Covid19GlobalMerged();
+                    rowResult.CountryOrRegion = countryUIDFipsList.CountryOrRegion;
+                    rowResult.IsHeader = countryUIDFipsList.IsHeader;
+                    if(!rowResult.IsHeader)
                     {
-                        var propValue = prop.GetValue(covid19Global, null);
-                        propInfo.SetValue(rowResult, propValue, null);
+                        //if (countryOrRegion == "Canada" || countryOrRegion == "Germany" || countryOrRegion == "China")
+                        //{
+                        //    var countryFound = countryUIDFipsList.Covid19Globals;
+                        //    var countryInfected = countryFound.Sum(x => x.DateValues.Last().NumbersComplete);
+                        //    Console.WriteLine($"Found: {countryUIDFipsList.CountryOrRegion} ProvinceOrState: {countryUIDFipsList.ProvinceOrState} Infected: {countryInfected} Population: {countryUIDFipsList.Population}");
+                        //}
+                        var newDateValue = new List<DateValue>();
+                        countryUIDFipsList.Covid19Globals.ForEach(x => newDateValue = x.DateValues);
+                        rowResult.DateValues = newDateValue;
+
+                        rowResult.Population = int.Parse(countryUIDFipsList.Population);
                     }
+                    result.Add(rowResult);
                 }
-
-                rowResult.Population = uidIsoFipsList.FindAll(x => x.CountryOrRegion == rowResult.CountryOrRegion && x.Code3 == x.UID).Sum(y => y.Population != "" ? int.Parse(y.Population) : 0);
-
-                if(covid19Global.CountryOrRegion == "Canada")
-                {
-                    //Here we are, and I have to check the result.. Why the canadian infected people are 0?
-                    //Thats the reason why this method works wrong!
-                }
-
-                result.Add(rowResult);
             }
+
+
+            //Hier noch die alte Strategie
+
+            //foreach (var covid19Global in covid19GlobalList)
+            //{
+            //    //dynamic convertion of the properties from the baseclass (Covid19Global) to this class (Covid19GlobalMerged)
+            //    var rowResult = new Covid19GlobalMerged();
+
+            //    foreach (var prop in covid19Global.GetType().GetProperties())
+            //    {
+            //        var propInfo = rowResult.GetType().GetProperty(prop.Name);
+            //        if (propInfo.CanWrite)
+            //        {
+            //            var propValue = prop.GetValue(covid19Global, null);
+            //            propInfo.SetValue(rowResult, propValue, null);
+            //        }
+            //    }
+            //    var population = countryUIDFipsListGrouped.FindAll(x => x.CountryOrRegion == rowResult.CountryOrRegion && x.Code3 == x.UID).Sum(y => y.Population != "" ? int.Parse(y.Population) : 0);
+
+            //    rowResult.Population = population;
+
+            //    result.Add(rowResult);
+            //}
 
             return result;
         }

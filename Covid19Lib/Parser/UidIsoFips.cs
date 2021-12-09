@@ -86,6 +86,9 @@ namespace Covid19Lib.Parser
         /// </summary>
         public string Population { get; set; }
 
+        /// <summary>
+        /// Gives back a timeseries for this province or state. If <seealso cref="ProvinceOrState"/> is null or empty, gives back the values of <seealso cref="CountryOrRegion"/>.
+        /// </summary>
         public List<Covid19Global> Covid19Globals { get { return GetTimeSeriesCovid19GlobalsAsync().Result; } }
 
         public List<Covid19US> Covid19Us { get { return GetTimeSeriesCovid19USAsync().Result; } }
@@ -150,7 +153,7 @@ namespace Covid19Lib.Parser
             try
             {
                 var allResult = await Covid19Global.ParseAsync(Settings.TimeSeriesConfirmedGlobalFile).ConfigureAwait(false);
-                return allResult.Where(x => string.IsNullOrEmpty(x.ProvinceOrState) ? x.CountryOrRegion == CountryOrRegion : x.ProvinceOrState == ProvinceOrState).ToList();
+                return allResult.Where(x => string.IsNullOrEmpty(x.CountryOrRegion) ? x.ProvinceOrState == ProvinceOrState : x.CountryOrRegion == CountryOrRegion).ToList();
             }
             catch (AggregateException)
             {
@@ -173,6 +176,11 @@ namespace Covid19Lib.Parser
             {
                 throw;
             }
+        }
+
+        public override string ToString()
+        {
+            return CountryOrRegion;
         }
     }
 }

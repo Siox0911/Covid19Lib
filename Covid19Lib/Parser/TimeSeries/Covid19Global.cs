@@ -48,7 +48,7 @@ namespace Covid19Lib.Parser.TimeSeries
         public string Longitude { get; set; }
 
         /// <summary>
-        /// The date if <code><seealso cref="IsHeader"/> = true</code>otherwise the number of cases.
+        /// The date if <c><seealso cref="IsHeader"/> = true</c> otherwise the number of cases.
         /// </summary>
         public List<DateValue> DateValues { get; set; }
 
@@ -238,6 +238,11 @@ namespace Covid19Lib.Parser.TimeSeries
         public static bool operator !=(Covid19Global left, Covid19Global right)
         {
             return !(left == right);
+        }
+
+        public override string ToString()
+        {
+            return $"{CountryOrRegion} - {ProvinceOrState}";
         }
     }
 }

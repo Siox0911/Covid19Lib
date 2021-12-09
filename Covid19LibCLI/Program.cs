@@ -36,6 +36,8 @@ namespace Covid19LibCLI
              * Official global data
              */
             confirmedGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesConfirmedGlobalFile).Result;
+            //Canada / Löschen nach Test
+            var confirmedCanada = confirmedGlobal.Where(x => x.CountryOrRegion == "Canada");
             deathsGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesDeathsGlobalFile).Result;
             recoveredGlobal = Covid19Global.ParseAsync(Settings.TimeSeriesRecoveredGlobalFile).Result;
 
@@ -154,7 +156,7 @@ namespace Covid19LibCLI
         private static void ParserShowGlobalPercentageOfPopulation()
         {
             //Hier berechnen wir wieviele Prozent der Bevölkerung aller Länder schon infiziert waren. Eine Mehrfachinfektion einer Person kann aber nicht ausgeschlossen werden.
-            var sortedGlobalMergeList = confirmedGlobalMerged.Where(y => !double.IsInfinity(y.PercentageOfPopulation)).OrderByDescending(x => x.PercentageOfPopulation).ToList();
+            var sortedGlobalMergeList = confirmedGlobalMerged.Where(y => !double.IsInfinity(y.PercentageOfPopulation) && y.Population > 0).OrderByDescending(x => x.PercentageOfPopulation).ToList();
             var sortedGlobalMergeListTop20 = sortedGlobalMergeList.Take(20);
 
             Console.ForegroundColor = ConsoleColor.Red;
@@ -190,6 +192,7 @@ namespace Covid19LibCLI
                     sumInfected += country.DateValues.Last().NumbersComplete;
                     Console.WriteLine($"{c:00}. |{country.CountryOrRegion,-25}| {country.Population,13:N0} | {country.DateValues.Last().NumbersComplete,13:N0} | {country.PercentageOfPopulation,11:N2}%");
                 }
+
                 if (c == lastIndex)
                 {
                     sumPopulation += country.Population;
